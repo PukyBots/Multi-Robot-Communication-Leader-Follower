@@ -9,14 +9,37 @@
 
 **Problem Statement:** Coordinating multiple robots in real time without centralized infrastructure is a core challenge in robotics. This project solves it using a decentralized ROS 2 publisher-subscriber model over WiFi.
 
-**Use Cases:** Warehouse automation, search and rescue, military convoy systems, agricultural robotics.
+---
+
+## 🚀 Use Cases
+
+This project demonstrates real-time coordination between multiple robots using a decentralized communication model. It can be applied in various real-world scenarios:
+
+- **Warehouse Automation:** A leader robot can guide multiple follower robots for transporting goods efficiently.
+- **Search and Rescue Operations:** Robots can navigate hazardous environments where a leader unit explores and others follow safely.
+- **Agricultural Robotics:** One robot can scan or map the field while others perform tasks such as spraying or seeding.
+- **Autonomous Convoy Systems:** Multiple unmanned vehicles can follow a lead vehicle in defense or logistics applications.
+
+> The key advantage of this system is reduced human intervention and scalable multi-robot coordination.
+
+---
+
+## 🔮 Future Enhancements / Project Extensions
+
+The current system can be further extended into the following advanced projects:
+
+1.**Multi-Follower Coordination System:** Extend the system to support multiple follower robots maintaining formation with a single leader.<br>
+2.**Obstacle-Aware Navigation:** Integrate sensors (ultrasonic/LiDAR) to enable the follower robot to avoid obstacles while still tracking the leader.<br>
+3.**Path Recording and Replay System:** Store the leader’s trajectory and allow follower robots to replicate the same path later without real-time communication.<br>
+4.**Vision-Based Tracking System:** Use computer vision techniques to track the leader instead of relying only on odometry data.<br>
+5.**Real-Time Monitoring Dashboard:** Develop a dashboard to visualize robot movement, communication data, and performance metrics in real time.
 
 ---
 
 ## 📌 Table of Contents
 
 - [Project Overview](#-project-overview)
-- [System Architecture](#-system-architecture)
+- [System Architecture](#️-system-architecture)
 - [Hardware Components](#-hardware-components)
 - [Circuit Connections](#-circuit-connections)
 - [Leader Robot Setup](#-leader-robot-setup)
@@ -39,6 +62,7 @@
   - [7. Uploading Arduino Code to Follower](#7-uploading-arduino-code-to-follower)
   - [8. Writing Follower Node](#8-writing-follower-node)
   - [9. Running the Follower Robot](#9-running-the-follower-robot)
+  - [10. Independent Motor Test via ROS 2 (Pre-Integration)](#10-independent-motor-test-via-ros-2-pre-integration)
 - [ROS 2 Topics](#-ros-2-topics)
 - [Code Structure](#-code-structure)
 - [Current Progress](#-current-progress)
@@ -71,7 +95,7 @@ The system works as follows:
 │   │  Raspberry Pi 4     │    │  Raspberry Pi 4     │     │
 │   │  Arduino Nano       │    │  Arduino Nano       │     │
 │   │  Encoder Motors     │    │  DC Motors          │     │
-│   │  L298N Driver       │    │  L298N Driver       │     │
+│   │  MDD10A Driver      │    │  L298N Driver       │     │
 │   │                     │    │                     │     │           
 │   │  Publishes:         │--->│ Subscribes:         │     │
 │   │    /cmd_vel         │    │    /odom            │     │
@@ -91,10 +115,9 @@ The system works as follows:
 | Raspberry Pi 4 Model B | Main brain — runs Ubuntu 22.04 and ROS 2 Humble |
 | Arduino Nano | Reads encoder pulses and controls motors via serial commands from Pi |
 | Encoder Motors (x2) | DC motors with encoders for precise odometry calculation |
-| L298N Motor Driver | Amplifies Arduino signals to drive motors at 12V |
+| MDD10A Motor Driver | Amplifies Arduino signals to drive motors at 12V |
 | Custom PCB Board | Connects all components in a clean, organized manner |
 | 12V Power Adapter | Powers the motor driver and Arduino; Pi is powered separately |
-| Pi Power Adapter (5V) | Powers the Raspberry Pi 4 via USB-C |
 
 ### Follower Robot
 
@@ -117,32 +140,62 @@ The system works as follows:
 
 **Encoder Pins:**
 
-| Encoder | Arduino Pin | Why |
-|---|---|---|
-| Right Encoder A | D3 | Hardware interrupt pin for precise pulse counting |
-| Right Encoder B | D2 | Hardware interrupt pin for direction detection |
-| Left Encoder A | A4 | Analog pin used as digital input |
-| Left Encoder B | A5 | Analog pin used as digital input |
-
-**Motor Control Pins:**
-
-| Signal | Arduino Pin | Why |
-|---|---|---|
-| M1 PWM (Speed) | D10 | PWM-capable pin to control right motor speed |
-| M1 DIR (Direction) | D6 | Digital pin to set right motor direction |
-| M2 PWM (Speed) | D9 | PWM-capable pin to control left motor speed |
-| M2 DIR (Direction) | D5 | Digital pin to set left motor direction |
-
-**Motor to Motor Driver (L298N):**
-
-| L298N Terminal | Connection |
+| Encoder | Arduino Nano Pin |
 |---|---|
-| OUT1 | Right Motor + |
-| OUT2 | Right Motor − |
-| OUT3 | Left Motor + |
-| OUT4 | Left Motor − |
+| Right Encoder A | D3 |
+| Right Encoder B | D2 |
+| Left Encoder A | A4 |
+| Left Encoder B | A5 |
 
-> ⚠️ **Note:** If both wheels spin in opposite directions when FORWARD is sent, swap the two wires of one motor on the L298N output terminals.
+> 📎 [`leader/left_motor.png`](leader/left_motor.png) — [`leader/right_motor.png`](leader/right_motor.png)
+
+---
+
+**Motor Control Pins (MDD10A ↔ Arduino Nano):**
+
+| Signal | Arduino Nano Pin |
+|---|---|
+| M1 PWM | D10 |
+| M1 DIR | D6 |
+| M2 PWM | D9 |
+| M2 DIR | D5 |
+
+> 📎 [`leader/MD_Nano.png`](leader/MD_Nano.png)
+
+---
+
+**Raspberry Pi ↔ Arduino Nano (USB):**
+
+| From | To | Cable |
+|---|---|---|
+| Raspberry Pi 4 USB 2.0 Port | Arduino Nano Mini-B USB Port | USB 2.0 A to Mini-B |
+
+> 📎 [`leader/Pi_Nano.png`](leader/Pi_Nano.png)
+
+---
+
+**Power Connections (12V Adapter → Buck Converter → Pi & Motor Driver):**
+
+| From | To |
+|---|---|
+| 12V Adapter (+) | B+ (MDD10A Motor Driver) |
+| 12V Adapter (−) | B− (MDD10A Motor Driver) |
+| 12V Adapter (+) | IN+ (Buck Converter) |
+| 12V Adapter (−) | IN− (Buck Converter) |
+| Buck Converter OUT+ | 5V (Raspberry Pi via USB-C) |
+| Buck Converter OUT− | GND (Raspberry Pi) |
+
+> 📎 [`leader/power.png`](leader/power.png)
+
+> ℹ️ **Note:** The connection diagram shows a LiPo battery for reference. The actual setup uses a 12V power adapter as the power source.
+
+---
+
+**Full Wiring Overview:**
+
+> 📎 [`leader/diagram1.png`](leader/diagram1.png)
+
+> ⚠️ **Note:** The leader robot uses a custom PCB that integrates the MDD10A motor driver, Arduino Nano, and power connections. The above diagrams are provided as fragments since a single unified diagram is not available. Refer to the pin tables above for exact wiring.
 
 ---
 
@@ -168,6 +221,8 @@ The system works as follows:
 
 > ⚠️ **Note:** If both wheels spin in opposite directions when FORWARD is sent, swap the two wires of one motor on the L298N output terminals.
 
+> 📎 **Circuit Diagram:** The follower robot's full connection diagram is available at [`follower/connection diagram.jpeg`](follower/connection%20diagram.jpeg). Refer to the pin tables above for exact wiring.
+
 ---
 
 ### Power Connections
@@ -176,12 +231,14 @@ The system works as follows:
 ```
 12V Power Adapter
       |
-      ├──→ L298N 12V IN (+) and GND (−)
-      │         |
-      │         ├──→ Motors (via OUT1–OUT4)
-      │         └──→ Arduino Nano (via L298N 5V out and GND)
-      │
-      └── (separate) Pi Power Adapter (5V USB-C) ──→ Raspberry Pi 4
+      └──→ Buck Converter IN+ and IN−
+                |
+                ├──→ MDD10A B+ and B−
+                │         |
+                │         ├──→ Motors (via M1A, M1B, M2A, M2B)
+                │         └──→ Arduino Nano (via MDD10A 5V out and GND)
+                │
+                └──→ Raspberry Pi 4 (via OUT+ and OUT−)
 ```
 
 **Follower Robot:**
@@ -194,9 +251,6 @@ The system works as follows:
                 └──→ Arduino Nano (via L298N 5V out and GND)
 
 (separate) Pi Power Adapter (5V USB-C) ──→ Raspberry Pi 4
-
-Arduino Nano ──→ USB cable ──→ Raspberry Pi 4 USB port
-(serial communication between Pi and Arduino)
 ```
 
 ---
@@ -219,10 +273,12 @@ Arduino Nano ──→ USB cable ──→ Raspberry Pi 4 USB port
 |---|---|
 | Hostname | `leader-robot` |
 | Username | `pi` |
-| Password | your password |
+| Password | `robot1234` |
 | WiFi SSID | your hotspot name |
 | WiFi Password | your hotspot password |
 | Timezone | Asia/Kolkata |
+
+> 💡 **Note:** The password used in this project is `robot1234`. You may change it to your preferred password during the Ubuntu flash setup.
 
 7. Services tab → Enable SSH ✅ → Password authentication ✅
 8. Click **Save → Yes → Yes** → Wait 5–10 minutes for flashing
@@ -356,7 +412,7 @@ Save and close. Now SSH works directly every time:
 **Why this step:** `leader_node.py` is the core ROS 2 software of the leader robot. It reads keyboard input, sends motor commands to Arduino via serial, reads encoder data to calculate and publish odometry on `/odom`, and uses MultiThreadedExecutor so all callbacks run concurrently without blocking keyboard input.
 
 ```bash
- cd ~/ros2_ws/leader_robot/leader_robot && nano leader_node.py
+ nano ~/ros2_ws/src/leader_robot/leader_robot/leader_node.py
 ```
 
 See full code in [`leader/leader_node.py`](leader/leader_node.py)
@@ -379,17 +435,6 @@ Build the package:
  source install/setup.bash
 ```
 
-**Keyboard Controls:**
-
-| Key | Action |
-|---|---|
-| `w` | Move Forward |
-| `s` | Move Backward |
-| `a` | Turn Left (smooth curve then straight) |
-| `d` | Turn Right (smooth curve then straight) |
-| `q` | Stop |
-| `x` | Exit |
-
 ---
 
 ### 9. Running the Leader Robot
@@ -397,6 +442,17 @@ Build the package:
 ```bash
  cd ~/ros2_ws && ros2 run leader_robot leader_node
 ```
+
+**Keyboard Controls:**
+
+| Key | Action |
+|---|---|
+| `w` | Move Forward |
+| `s` | Move Backward |
+| `a` | Turn Left |
+| `d` | Turn Right| 
+| `q` | Stop |
+| `x` | Exit |
 
 Use **W/A/S/D** keys to control the robot. Odometry is published automatically on `/odom` as the robot moves.
 
@@ -414,8 +470,10 @@ Follow the same flashing steps as the leader but use these settings:
 |---|---|
 | Hostname | `follower-robot` |
 | Username | `pi` |
-| Password | your password |
+| Password | `robot1234` |
 | WiFi SSID | **same hotspot as leader** ⚠️ |
+
+> 💡 **Note:** The password used in this project is `robot1234`. You may change it to your preferred password during the Ubuntu flash setup.
 
 > ⚠️ **Critical:** Both robots MUST connect to the same WiFi hotspot for ROS 2 topics to reach each other.
 
@@ -538,7 +596,7 @@ After uploading → disconnect from laptop → reconnect to follower Pi USB port
 **Why this step:** `follower_node.py` subscribes to the leader's `/odom` topic to get its real-time position. It calculates the error between the follower's current position and the leader's position, then sends motor commands to close that gap — replicating the leader's movement automatically.
 
 ```bash
- nano ~/ros2_ws/follower_robot/follower_robot/follower_node.py
+ nano ~/ros2_ws/src/follower_robot/follower_robot/follower_node.py
 ```
 
 See full code in [`follower/follower_node.py`](follower/follower_node.py)
@@ -574,6 +632,131 @@ The follower automatically subscribes to the leader's `/odom` topic and replicat
 
 ---
 
+### 10. Independent Motor Test via ROS 2 (Pre-Integration)
+
+**Why this step:** Before integrating both robots, we first verify the follower robot's motors work correctly by sending ROS 2 commands directly from the terminal. This tests the complete pipeline: ROS 2 → Pi → Serial → Arduino → Motors — without involving the leader robot at all.
+
+**Files Used:**
+
+| File | Location | Purpose |
+|---|---|---|
+| `motor_test.ino` | [`follower/arduino/motor_test.ino`](follower/arduino/motor_test.ino) | Uploaded to Arduino — receives serial commands, drives motors |
+| `motor_test.py` | [`follower/motor_test.py`](follower/motor_test.py) | Runs on Pi — receives ROS 2 commands, sends to Arduino via serial |
+
+**Step 1 — Upload Arduino code (on laptop):**
+
+1. Connect Arduino to laptop via USB
+2. Open Arduino IDE → paste code from [`follower/arduino/serial_test.ino`](follower/arduino/serial_test.ino) → Upload
+3. Wait for "Done uploading"
+4. Disconnect from laptop → connect Arduino to follower Pi USB port
+
+**Step 2 — Terminal 1 (Follower Pi):**
+
+```bash
+ssh pi@follower-robot.local
+```
+
+```bash
+ls /dev/ttyUSB*
+```
+
+Note which port Arduino is on (USB0 or USB1) and update `ros2_motor_test.py` if needed.
+
+```bash
+sudo chmod 666 /dev/ttyUSB0
+```
+
+```bash
+python3 ~/ros2_ws/src/follower_robot/follower_robot/ros2_motor_test.py
+```
+
+Wait for:
+```
+Arduino connected!
+Ready! Waiting for ROS2 commands...
+```
+
+**Step 3 — Terminal 2 — Method A: Manual ROS 2 commands:**
+
+```bash
+ssh pi@follower-robot.local
+```
+
+Forward:
+```bash
+ros2 topic pub --once /follower/cmd_vel geometry_msgs/msg/Twist \
+  "{linear: {x: 0.5, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}"
+```
+
+Backward:
+```bash
+ros2 topic pub --once /follower/cmd_vel geometry_msgs/msg/Twist \
+  "{linear: {x: -0.5, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}"
+```
+
+Left:
+```bash
+ros2 topic pub --once /follower/cmd_vel geometry_msgs/msg/Twist \
+  "{linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.5}}"
+```
+
+Right:
+```bash
+ros2 topic pub --once /follower/cmd_vel geometry_msgs/msg/Twist \
+  "{linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: -0.5}}"
+```
+
+Stop:
+```bash
+ros2 topic pub --once /follower/cmd_vel geometry_msgs/msg/Twist \
+  "{linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}"
+```
+
+**Step 3 — Terminal 2 — Method B: Keyboard control using teleop:**
+
+Install teleop (one time only):
+```bash
+sudo apt install ros-humble-teleop-twist-keyboard -y
+source /opt/ros/humble/setup.bash
+```
+
+Run keyboard controller remapped to follower:
+```bash
+ros2 run teleop_twist_keyboard teleop_twist_keyboard \
+  --ros-args -r /cmd_vel:=/follower/cmd_vel
+```
+
+| Key | Action |
+|---|---|
+| `i` | Forward |
+| `,` | Backward |
+| `j` | Turn Left |
+| `l` | Turn Right |
+| `k` | STOP |
+| `Ctrl+C` | Quit |
+
+**Expected Output:**
+
+Terminal 1 prints:
+```
+Sending: FORWARD
+Sending: STOP
+Sending: BACKWARD
+```
+Motors move accordingly ✅
+
+**Troubleshooting:**
+
+| Problem | Cause | Fix |
+|---|---|---|
+| Arduino not found! | Wrong USB port | Change `/dev/ttyUSB0` to `/dev/ttyUSB1` in `ros2_motor_test.py` |
+| Permission denied | No USB access | Run `sudo chmod 666 /dev/ttyUSB0` |
+| Input/output error | USB connection dropped | Unplug and replug Arduino, run chmod again |
+| Sending: FORWARD but no movement | Power issue | Check 12V adapter is ON and GND is shared between Arduino and L298N |
+| Robot slants to one side | Motor speed imbalance | Adjust ENA/ENB values in Arduino code |
+
+---
+
 ## 📡 ROS 2 Topics
 
 | Topic | Message Type | Publisher | Subscriber | Purpose |
@@ -595,8 +778,10 @@ multi-robot-communication/
 │       └── motor_control.ino   ← Arduino code for leader motor control + encoder reading
 └── follower/
     ├── follower_node.py        ← ROS 2 node for follower robot (subscribes to /odom)
+    ├── motor_test.py      ← Test script for verifying motors via ROS 2 commands
     └── arduino/
-        └── follower_motor.ino  ← Arduino code for follower motor control
+        ├── follower_motor.ino  ← Arduino code for follower motor control
+        └── motor_test.ino     ← Arduino test code for independent motor testing
 ```
 
 Each file is linked directly from the setup steps above for easy navigation.
@@ -619,16 +804,16 @@ Each file is linked directly from the setup steps above for easy navigation.
 | Follower Robot — Hardware Wiring | ✅ Done |
 | Follower Robot — Arduino Motor Code | ✅ Done |
 | Follower Robot — Movement | ✅ Done |
-| Leader–Follower Communication | ⬜ Pending |
+| Leader–Follower Communication | ✅ Done |
 
 ---
 
 ## 🙏 Acknowledgements
 
-**Internship Supervisor:** Pulkit Garg
+**Internship Supervisor:** Pulkit Garg <br>
 **Organization:** Technical Career Education
 
-**Institution:** Yenepoya Institute of Arts, Science, Commerce and Management
+**Institution:** Yenepoya Institute of Arts, Science, Commerce and Management<br>
 **Programme:** BCA — Artificial Intelligence, Machine Learning, Robotics and IoT
 
 ---
@@ -637,7 +822,7 @@ Each file is linked directly from the setup steps above for easy navigation.
 
 | Name | Register No |
 |---|---|
-| Nafeesath Saadha | 23sBCARI118 |
+| Nafeesath Saadha | 23BCARI118 |
 | Shibeen Abid V | 23BCARI148 |
 
 ---
