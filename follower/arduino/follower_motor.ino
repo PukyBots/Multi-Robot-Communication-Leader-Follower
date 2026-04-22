@@ -8,8 +8,8 @@
 // CALIBRATION: Adjust these if the robot curves to one side
 // If it curves LEFT, increase RIGHT_SPEED or decrease LEFT_SPEED
 // If it curves RIGHT, increase LEFT_SPEED or decrease RIGHT_SPEED
-#define LEFT_SPEED 70
-#define RIGHT_SPEED 70
+#define LEFT_SPEED 80
+#define RIGHT_SPEED 80
 
 void setup() {
   Serial.begin(9600);

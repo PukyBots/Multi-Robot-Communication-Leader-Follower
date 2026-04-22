@@ -59,10 +59,11 @@ The current system can be further extended into the following advanced projects:
   - [4. Updating the Follower Pi](#4-updating-the-follower-pi)
   - [5. Installing ROS 2 Humble on Follower](#5-installing-ros-2-humble-on-follower)
   - [6. Creating Follower Workspace](#6-creating-follower-workspace)
-  - [7. Uploading Arduino Code to Follower](#7-uploading-arduino-code-to-follower)
-  - [8. Writing Follower Node](#8-writing-follower-node)
-  - [9. Running the Follower Robot](#9-running-the-follower-robot)
-  - [10. Independent Motor Test via ROS 2 (Pre-Integration)](#10-independent-motor-test-via-ros-2-pre-integration)
+  - [7. Creating the Follower Launch File](#7-creating-the-follower-launch-file)
+  - [8. Uploading Arduino Code to Follower](#8-uploading-arduino-code-to-follower)
+  - [9. Writing Follower Node](#9-writing-follower-node)
+  - [10. Running the Follower Robot](#10-running-the-follower-robot)
+  - [11. Independent Motor Test via ROS 2 (Pre-Integration)](#11-independent-motor-test-via-ros-2-pre-integration)
 - [ROS 2 Topics](#-ros-2-topics)
 - [Code Structure](#-code-structure)
 - [Current Progress](#-current-progress)
@@ -117,7 +118,8 @@ The system works as follows:
 | Encoder Motors (x2) | DC motors with encoders for precise odometry calculation |
 | MDD10A Motor Driver | Amplifies Arduino signals to drive motors at 12V |
 | Custom PCB Board | Connects all components in a clean, organized manner |
-| 12V Power Adapter | Powers the motor driver and Arduino; Pi is powered separately |
+| 12V Power Adapter | Powers the motor driver and Arduino Nano (via MDD10A 5V out) |
+| Buck Converter | Steps down 12V to 5V to power the Raspberry Pi |
 
 ### Follower Robot
 
@@ -129,8 +131,6 @@ The system works as follows:
 | DC Motors (x2) | Standard DC motors for physical movement |
 | 12V Power Adapter | Powers the motor driver and Arduino |
 | Pi Power Adapter (5V) | Powers the Raspberry Pi 4 via USB-C separately |
-
-> ⚠️ **Note:** A buck converter was tested but caused power instability issues. Both robots now use a dedicated Pi adapter (5V USB-C) for the Raspberry Pi and the 12V adapter solely for the motor driver and Arduino.
 
 ---
 
@@ -174,7 +174,7 @@ The system works as follows:
 
 ---
 
-**Power Connections (12V Adapter → Buck Converter → Pi & Motor Driver):**
+**Power Connections (12V Adapter → Buck Converter & MDD10A → Pi, Motors & Arduino):**
 
 | From | To |
 |---|---|
@@ -231,15 +231,17 @@ The system works as follows:
 ```
 12V Power Adapter
       |
+      ├──→ MDD10A B+ and B−
+      │         |
+      │         ├──→ Motors (via M1A, M1B, M2A, M2B)
+      │         └──→ Arduino Nano (via MDD10A 5V out and GND)
+      │
       └──→ Buck Converter IN+ and IN−
                 |
-                ├──→ MDD10A B+ and B−
-                │         |
-                │         ├──→ Motors (via M1A, M1B, M2A, M2B)
-                │         └──→ Arduino Nano (via MDD10A 5V out and GND)
-                │
-                └──→ Raspberry Pi 4 (via OUT+ and OUT−)
-```
+                └──→ OUT+ and OUT−
+                          |
+                          └──→ Raspberry Pi 4 (5V)
+```                         
 
 **Follower Robot:**
 ```
@@ -396,7 +398,7 @@ Save and close. Now SSH works directly every time:
 
 ### 7. Uploading Arduino Code
 
-**Why this step:** The Raspberry Pi GPIO pins provide only 3.3V/16mA — not enough to drive motors. The Arduino Nano acts as the dedicated motor controller: it receives serial commands from the Pi (FORWARD, BACKWARD, LEFT, RIGHT, SMOOTH_LEFT, SMOOTH_RIGHT, STOP), converts them to PWM signals for the L298N motor driver, reads encoder pulses, and sends odometry data back to the Pi.
+**Why this step:** The Raspberry Pi GPIO pins provide only 3.3V/16mA — not enough to drive motors. The Arduino Nano acts as the dedicated motor controller: it receives serial commands from the Pi (FORWARD, BACKWARD, LEFT, RIGHT, SMOOTH_LEFT, SMOOTH_RIGHT, STOP), converts them to PWM signals for the MDD10A motor driver, reads encoder pulses, and sends odometry data back to the Pi.
 
 **Steps:**
 1. Connect Arduino Nano to laptop via USB
@@ -454,7 +456,13 @@ Build the package:
 | `q` | Stop |
 | `x` | Exit |
 
+**Expected Output :**
+[Leader Node Output](screenshots/leader_node_output.png)
+
 Use **W/A/S/D** keys to control the robot. Odometry is published automatically on `/odom` as the robot moves.
+
+> ℹ️ **Note:** The leader uses `ros2 run` instead of a launch file because it requires keyboard input which launch
+files do not support in headless mode.
 
 ---
 
@@ -581,7 +589,53 @@ Run the same commands as Leader Robot [Step 5](#5-installing-ros-2-humble):
 
 ---
 
-### 7. Uploading Arduino Code to Follower
+### 7. Creating the Follower Launch File
+
+**Why this step:** A ROS 2 launch file lets you start multiple processes with a single command. Instead of running the follower node and odometry monitor in separate terminals, the launch file starts both together in one terminal — keeping it clean and simple.
+
+**Step 1 — Create the launch folder:**
+```bash
+mkdir -p ~/ros2_ws/src/follower_robot/launch
+```
+
+**Step 2 — Create the launch file:**
+```bash
+nano ~/ros2_ws/src/follower_robot/launch/follower_launch.py
+```
+
+Paste the code from [`follower/launch/follower_launch.py`](follower/launch/follower_launch.py)
+
+Then `Ctrl + X` → `Y` → `Enter` to save.
+
+**Step 3 — Update `setup.py` to include the launch file:**
+```bash
+nano ~/ros2_ws/src/follower_robot/setup.py
+```
+
+Find this block:
+```python
+    data_files=[
+        ('share/ament_index/resource_index/packages',
+            ['resource/' + package_name]),
+        ('share/' + package_name, ['package.xml']),
+    ],
+```
+
+Replace it with:
+```python
+    data_files=[
+        ('share/ament_index/resource_index/packages',
+            ['resource/' + package_name]),
+        ('share/' + package_name, ['package.xml']),
+        ('share/' + package_name + '/launch', ['launch/follower_launch.py']),
+    ],
+```
+
+Then `Ctrl + X` → `Y` → `Enter` to save.
+
+---
+
+### 8. Uploading Arduino Code to Follower
 
 **Why this step:** The follower Arduino receives FORWARD/BACKWARD/LEFT/RIGHT/STOP commands from the Pi via serial and drives the L298N motor driver with appropriate PWM signals to physically move the robot.
 
@@ -591,7 +645,7 @@ After uploading → disconnect from laptop → reconnect to follower Pi USB port
 
 ---
 
-### 8. Writing Follower Node
+### 9. Writing Follower Node
 
 **Why this step:** `follower_node.py` subscribes to the leader's `/odom` topic to get its real-time position. It calculates the error between the follower's current position and the leader's position, then sends motor commands to close that gap — replicating the leader's movement automatically.
 
@@ -604,8 +658,7 @@ See full code in [`follower/follower_node.py`](follower/follower_node.py)
 Update `setup.py`:
 
 ```bash
- cd ~/ros2_ws/follower_robot
- nano setup.py
+ nano ~/ros2_ws/src/follower_robot/setup.py
 ```
 
 ```python
@@ -622,17 +675,38 @@ Build:
 
 ---
 
-### 9. Running the Follower Robot
+### 10. Running the Follower Robot
+
+**Why this step:** The follower robot uses a ROS 2 launch file to start both the follower node and odometry monitoring in a single terminal — no need for multiple terminals.
+
+First, give the Pi permission to access the Arduino's USB port:
 
 ```bash
- cd ~/ros2_ws && colcon build --packages-select follower_robot && source install/setup.bash && ros2 run follower_robot follower_node
+sudo chmod 666 /dev/ttyUSB0
 ```
+Then launch the follower node:
+
+```bash
+ros2 launch follower_robot follower_launch.py
+```
+
+This single command starts:
+- `follower_node` — subscribes to leader's `/odom` and `/cmd_vel` and drives the motors
+- `ros2 topic echo /odom` — displays the leader's real-time position and orientation in the same terminal
 
 The follower automatically subscribes to the leader's `/odom` topic and replicates the movement.
 
+**Expected Output :** <br>
+[Follower Launch Output](screenshots/follower_launch_output.png)<br>
+[Follower Odom Data](screenshots/follower_odom_data.png)<br>
+[Follower Tracking Leader](screenshots/follower_tracking.png)<br>
+[Follower Stopped](screenshots/follower_stopped.png)
+
+> ⚠️ **Note:** Make sure the leader robot is running before launching the follower, and both Pi's are connected to the same hotspot.
+
 ---
 
-### 10. Independent Motor Test via ROS 2 (Pre-Integration)
+### 11. Independent Motor Test via ROS 2 (Pre-Integration)
 
 **Why this step:** Before integrating both robots, we first verify the follower robot's motors work correctly by sending ROS 2 commands directly from the terminal. This tests the complete pipeline: ROS 2 → Pi → Serial → Arduino → Motors — without involving the leader robot at all.
 
@@ -660,14 +734,14 @@ ssh pi@follower-robot.local
 ls /dev/ttyUSB*
 ```
 
-Note which port Arduino is on (USB0 or USB1) and update `ros2_motor_test.py` if needed.
+Note which port Arduino is on (USB0 or USB1) and update `motor_test.py` if needed.
 
 ```bash
 sudo chmod 666 /dev/ttyUSB0
 ```
 
 ```bash
-python3 ~/ros2_ws/src/follower_robot/follower_robot/ros2_motor_test.py
+python3 ~/ros2_ws/src/follower_robot/follower_robot/motor_test.py
 ```
 
 Wait for:
@@ -749,10 +823,10 @@ Motors move accordingly ✅
 
 | Problem | Cause | Fix |
 |---|---|---|
-| Arduino not found! | Wrong USB port | Change `/dev/ttyUSB0` to `/dev/ttyUSB1` in `ros2_motor_test.py` |
+| Arduino not found! | Wrong USB port | Change `/dev/ttyUSB0` to `/dev/ttyUSB1` in `motor_test.py` |
 | Permission denied | No USB access | Run `sudo chmod 666 /dev/ttyUSB0` |
 | Input/output error | USB connection dropped | Unplug and replug Arduino, run chmod again |
-| Sending: FORWARD but no movement | Power issue | Check 12V adapter is ON and GND is shared between Arduino and L298N |
+| Sending: FORWARD but no movement | Power issue | Check 12V adapter is ON and GND is shared between Arduino and MDD10A |
 | Robot slants to one side | Motor speed imbalance | Adjust ENA/ENB values in Arduino code |
 
 ---
@@ -774,15 +848,27 @@ multi-robot-communication/
 ├── README.md
 ├── leader/
 │   ├── leader_node.py          ← ROS 2 node for leader robot (keyboard control + odometry)
+│   ├── diagram1.png            ← Full wiring overview
+│   ├── left_motor.png          ← Left encoder motor connections
+│   ├── right_motor.png         ← Right encoder motor connections
+│   ├── MD_Nano.png             ← Motor driver to Arduino connections
+│   ├── Pi_Nano.png             ← Raspberry Pi to Arduino connections
+│   ├── power.png               ← Power connections
 │   └── arduino/
 │       └── motor_control.ino   ← Arduino code for leader motor control + encoder reading
-└── follower/
-    ├── follower_node.py        ← ROS 2 node for follower robot (subscribes to /odom)
-    ├── motor_test.py      ← Test script for verifying motors via ROS 2 commands
-    └── arduino/
-        ├── follower_motor.ino  ← Arduino code for follower motor control
-        └── motor_test.ino     ← Arduino test code for independent motor testing
+├── follower/
+│   ├── follower_node.py        ← ROS 2 node for follower robot (subscribes to /odom)
+│   ├── motor_test.py           ← Test script for verifying motors via ROS 2 commands
+│   ├── connection diagram.jpeg ← Full wiring diagram for follower robot
+│   ├── launch/
+│   │   └── follower_launch.py  ← ROS 2 launch file for follower
+│   └── arduino/
+│       ├── follower_motor.ino  ← Arduino code for follower motor control
+│       └── motor_test.ino      ← Arduino test code for independent motor testing
+└── screenshots/ 
 ```
+
+[Leader Workspace](screenshots/leader_workspace.png)
 
 Each file is linked directly from the setup steps above for easy navigation.
 
