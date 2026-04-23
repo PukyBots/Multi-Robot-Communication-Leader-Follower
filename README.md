@@ -30,11 +30,11 @@ This project demonstrates real-time coordination between multiple robots using a
 
 The current system can be further extended into the following advanced projects:
 
-1.**Multi-Follower Coordination System:** Extend the system to support multiple follower robots maintaining formation with a single leader.<br>
-2.**Obstacle-Aware Navigation:** Integrate sensors (ultrasonic/LiDAR) to enable the follower robot to avoid obstacles while still tracking the leader.<br>
-3.**Path Recording and Replay System:** Store the leader’s trajectory and allow follower robots to replicate the same path later without real-time communication.<br>
-4.**Vision-Based Tracking System:** Use computer vision techniques to track the leader instead of relying only on odometry data.<br>
-5.**Real-Time Monitoring Dashboard:** Develop a dashboard to visualize robot movement, communication data, and performance metrics in real time.
+1.  **Multi-Follower Coordination System:** Extend the system to support multiple follower robots maintaining formation with a single leader.<br>
+2. **Obstacle-Aware Navigation:** Integrate sensors (ultrasonic/LiDAR) to enable the follower robot to avoid obstacles while still tracking the leader.<br>
+3. **Path Recording and Replay System:** Store the leader’s trajectory and allow follower robots to replicate the same path later without real-time communication.<br>
+4. **Vision-Based Tracking System:** Use computer vision techniques to track the leader instead of relying only on odometry data.<br>
+5. **Real-Time Monitoring Dashboard:** Develop a dashboard to visualize robot movement, communication data, and performance metrics in real time.
 
 ---
 
@@ -224,7 +224,7 @@ The system works as follows:
 > ⚠️ **Note:** If both wheels spin in opposite directions when FORWARD is sent, swap the two wires of one motor on the L298N output terminals.
 
 **Circuit Diagram:** 
-![connection diagram](follower/connection%20diagram.jpeg). Refer to the pin tables above for exact wiring.
+![connection diagram](follower/connection%20diagram.jpeg) Refer to the pin tables above for exact wiring.
 
 ---
 
