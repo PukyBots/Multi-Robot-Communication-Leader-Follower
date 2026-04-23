@@ -149,7 +149,7 @@ The system works as follows:
 | Left Encoder A | A4 |
 | Left Encoder B | A5 |
 
-> 📎 [`leader/left_motor.png`](leader/left_motor.png) — [`leader/right_motor.png`](leader/right_motor.png)
+![left_motor](leader/left_motor.png) — ![right_motor](leader/right_motor.png)
 
 ---
 
@@ -162,7 +162,7 @@ The system works as follows:
 | M2 PWM | D9 |
 | M2 DIR | D5 |
 
-> 📎 [`leader/MD_Nano.png`](leader/MD_Nano.png)
+![MD_Nano](leader/MD_Nano.png)
 
 ---
 
@@ -172,7 +172,7 @@ The system works as follows:
 |---|---|---|
 | Raspberry Pi 4 USB 2.0 Port | Arduino Nano Mini-B USB Port | USB 2.0 A to Mini-B |
 
-> 📎 [`leader/Pi_Nano.png`](leader/Pi_Nano.png)
+![Pi_Nano](leader/Pi_Nano.png)
 
 ---
 
@@ -187,7 +187,7 @@ The system works as follows:
 | Buck Converter OUT+ | 5V (Raspberry Pi via USB-C) |
 | Buck Converter OUT− | GND (Raspberry Pi) |
 
-> 📎 [`leader/power.png`](leader/power.png)
+![power](leader/power.png)
 
 > ℹ️ **Note:** The connection diagram shows a LiPo battery for reference. The actual setup uses a 12V power adapter as the power source.
 
@@ -195,7 +195,7 @@ The system works as follows:
 
 **Full Wiring Overview:**
 
-> 📎 [`leader/diagram1.png`](leader/diagram1.png)
+![diagram1](leader/diagram1.png)
 
 > ⚠️ **Note:** The leader robot uses a custom PCB that integrates the MDD10A motor driver, Arduino Nano, and power connections. The above diagrams are provided as fragments since a single unified diagram is not available. Refer to the pin tables above for exact wiring.
 
@@ -223,7 +223,8 @@ The system works as follows:
 
 > ⚠️ **Note:** If both wheels spin in opposite directions when FORWARD is sent, swap the two wires of one motor on the L298N output terminals.
 
-> 📎 **Circuit Diagram:** The follower robot's full connection diagram is available at [`follower/connection diagram.jpeg`](follower/connection%20diagram.jpeg). Refer to the pin tables above for exact wiring.
+**Circuit Diagram:** 
+![connection diagram](follower/connection%20diagram.jpeg). Refer to the pin tables above for exact wiring.
 
 ---
 
@@ -459,7 +460,7 @@ Build the package:
 | `x` | Exit |
 
 **Expected Output :**
-[Leader Node Output](screenshots/leader_node_output.png)
+![Leader Node Output](screenshots/leader_node_output.png)
 
 Use **W/A/S/D** keys to control the robot. Odometry is published automatically on `/odom` as the robot moves.
 
@@ -699,10 +700,9 @@ This single command starts:
 The follower automatically subscribes to the leader's `/odom` topic and replicates the movement.
 
 **Expected Output :** <br>
-[Follower Launch Output](screenshots/follower_launch_output.png)<br>
-[Follower Odom Data](screenshots/follower_odom_data.png)<br>
-[Follower Tracking Leader](screenshots/follower_tracking.png)<br>
-[Follower Stopped](screenshots/follower_stopped.png)
+![Follower Launch Output](screenshots/follower_launch_output.png)<br>
+![Follower Tracking Leader](screenshots/follower_tracking.png)<br>
+![Follower Stopped](screenshots/follower_stopped.png)
 
 > ⚠️ **Note:** Make sure the leader robot is running before launching the follower, and both Pi's are connected to the same hotspot.
 
@@ -870,7 +870,7 @@ multi-robot-communication/
 └── screenshots/ 
 ```
 
-[Leader Workspace](screenshots/leader_workspace.png)
+![Leader Workspace](screenshots/leader_workspace.png)
 
 Each file is linked directly from the setup steps above for easy navigation.
 
