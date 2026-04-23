@@ -7,6 +7,8 @@
 
 > **Two robots communicate over WiFi using ROS 2 topics. The Leader robot is controlled using a keyboard and continuously publishes its odometry data (position and orientation). The Follower robot subscribes to this data, calculates the positional error, and replicates the movement in real time — demonstrating coordinated multi-robot communication over a shared network.**
 
+![demo](demo.gif)
+
 **Problem Statement:** Coordinating multiple robots in real time without centralized infrastructure is a core challenge in robotics. This project solves it using a decentralized ROS 2 publisher-subscriber model over WiFi.
 
 ---
