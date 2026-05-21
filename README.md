@@ -872,6 +872,9 @@ multi-robot-communication/
 
 ![Leader Workspace](screenshots/leader_workspace.png)
 
+![Follower Workspace](screenshots/follower_workspace.png)
+
+
 Each file is linked directly from the setup steps above for easy navigation.
 
 ---
